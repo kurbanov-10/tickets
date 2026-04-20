@@ -1,16 +1,26 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.engine import create_engine
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./sql_app.db"
+DATABASE_URL = 'sqlite:///./db.sqlite3'
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
+
+engine = create_engine(DATABASE_URL,
+                       connect_args={'check_same_thread': False},
+                       echo=True)
+
+
+Session = sessionmaker(bind=engine, autoflush=False)
+
+class Base(DeclarativeBase):
+    pass
+
 
 def get_db():
-    db = SessionLocal()
     try:
+        db = Session()
         yield db
+    except Exception as e:
+        db.rollback()
+        raise e
     finally:
         db.close()
